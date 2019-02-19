@@ -391,6 +391,20 @@ void lv_list_set_style(lv_obj_t * list, lv_list_style_t type, lv_style_t * style
     }
 }
 
+/**
+ * Set wrap around navigation flag of a list
+ * @param list pointer to a list object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_list_set_wrap_around(lv_obj_t * list, bool en)
+{
+    lv_list_ext_t * ext = lv_obj_get_ext_attr(list);
+
+    ext->wrap_around = en;
+}
+
+
 /*=====================
  * Getter functions
  *====================*/
@@ -475,7 +489,7 @@ lv_obj_t * lv_list_get_prev_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(btn->signal_func != lv_list_btn_signal) {
+    while(btn->signal_func != lv_list_btn_signal || lv_btn_get_state(btn) == LV_BTN_STATE_INA) {
         btn = lv_obj_get_child(scrl, btn);
         if(btn == NULL) break;
     }
@@ -502,7 +516,7 @@ lv_obj_t * lv_list_get_next_btn(const lv_obj_t * list, lv_obj_t * prev_btn)
     btn = lv_obj_get_child_back(scrl, prev_btn);
     if(btn == NULL) return NULL;
 
-    while(btn->signal_func != lv_list_btn_signal) {
+    while(btn->signal_func != lv_list_btn_signal || lv_btn_get_state(btn) == LV_BTN_STATE_INA) {
         btn = lv_obj_get_child_back(scrl, btn);
         if(btn == NULL) break;
     }
@@ -812,6 +826,7 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
             /*If there is a valid selected button the make the previous selected*/
             if(ext->selected_btn) {
                 lv_obj_t * btn_prev = lv_list_get_next_btn(list, ext->selected_btn);
+                if(!btn_prev && ext->wrap_around) btn_prev = lv_list_get_next_btn(list,NULL);
                 if(btn_prev) lv_list_set_btn_selected(list, btn_prev);
             }
             /*If there is no selected button the make the first selected*/
@@ -824,6 +839,9 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
             /*If there is a valid selected button the make the next selected*/
             if(ext->selected_btn != NULL) {
                 lv_obj_t * btn_next = lv_list_get_prev_btn(list, ext->selected_btn);
+                if(!btn_next && ext->wrap_around) {
+                    btn_next = lv_list_get_prev_btn(list,NULL);
+                }
                 if(btn_next) lv_list_set_btn_selected(list, btn_next);
             }
             /*If there is no selected button the make the first selected*/
@@ -856,7 +874,28 @@ static lv_res_t lv_list_signal(lv_obj_t * list, lv_signal_t sign, void * param)
             if(buf->type[i] == NULL) break;
         }
         buf->type[i] = "lv_list";
+    } else if(sign == LV_SIGNAL_LONG_PRESS || sign == LV_SIGNAL_PRESSED) {
+         /*Get the 'pressed' button*/
+        lv_obj_t * btn = NULL;
+        btn = lv_list_get_prev_btn(list, btn);
+        while(btn != NULL) {
+            if(lv_btn_get_state(btn) == LV_BTN_STATE_PR) break;
+            btn = lv_list_get_prev_btn(list, btn);
+        }
+ 
+        if(btn != NULL) {
+            lv_action_t rel_action;
+            lv_btn_action_t btn_action;
+            if (sign == LV_SIGNAL_LONG_PRESS ) {
+                btn_action = LV_BTN_ACTION_LONG_PR;
+            } else {
+                btn_action = LV_BTN_ACTION_PR;
+            }
+            rel_action = lv_btn_get_action(btn, btn_action);
+            if(rel_action != NULL) rel_action(btn);
+        }
     }
+
     return res;
 }
 

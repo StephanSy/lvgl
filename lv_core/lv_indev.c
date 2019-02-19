@@ -458,7 +458,7 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
     if(i->group == NULL) return;
 
     /*Process the steps first. They are valid only with released button*/
-    if(data->state == LV_INDEV_STATE_REL) {
+    if(data->state == LV_INDEV_STATE_REL && data->enc_diff != 0) {
         /*In edit mode send LEFT/RIGHT keys*/
         if(lv_group_get_editing(i->group)) {
             int32_t s;
@@ -483,6 +483,8 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
     if(data->state == LV_INDEV_STATE_PR &&
             i->proc.last_state == LV_INDEV_STATE_REL) {
         i->proc.pr_timestamp = lv_tick_get();
+        lv_obj_t * focused = lv_group_get_focused(i->group);
+        focused->signal_func(focused, LV_SIGNAL_PRESSED, &indev_act);
     }
     /*Pressing*/
     else if(data->state == LV_INDEV_STATE_PR && i->proc.last_state == LV_INDEV_STATE_PR) {
@@ -514,18 +516,24 @@ static void indev_encoder_proc(lv_indev_t * i, lv_indev_data_t * data)
         bool editable = false;
         if(focused) focused->signal_func(focused, LV_SIGNAL_GET_EDITABLE, &editable);
 
-        /*The button was released on a non-editable object. Just send enter*/
-        if(!editable) {
-            lv_group_send_data(i->group, LV_GROUP_KEY_ENTER);
-        }
-        /*An object is being edited and the button is releases. Just send enter */
-        else if(i->group->editing) {
-            if(!i->proc.long_pr_sent || i->group->obj_ll.head == i->group->obj_ll.tail)
-                lv_group_send_data(i->group, LV_GROUP_KEY_ENTER);  /*Ignore long pressed enter release because it comes from mode switch*/
-        }
-        /*If the focused object is editable and now in navigate mode then enter edit mode*/
-        else if(editable && !i->group->editing && !i->proc.long_pr_sent) {
-            lv_group_set_editing(i->group, lv_group_get_editing(i->group) ? false : true);  /*Toggle edit mode on long press*/
+        if (!i->proc.long_pr_sent)
+        {
+            /*The button was released on a non-editable object. Just send enter*/
+            if(!editable) {
+                lv_group_send_data(i->group, LV_GROUP_KEY_ENTER);
+            }
+            /*The button was released on a editable object.*/
+            else {
+                if(i->group->editing) {
+                    /*An object is being edited and the button is releases. Just send enter */
+                    if(!i->proc.long_pr_sent || i->group->obj_ll.head == i->group->obj_ll.tail)
+                        lv_group_send_data(i->group, LV_GROUP_KEY_ENTER);  /*Ignore long pressed enter release because it comes from mode switch*/
+                }
+                /*If the focused object is editable and now in navigate mode then enter edit mode*/
+                else {
+                   lv_group_set_editing(i->group, lv_group_get_editing(i->group) ? false : true);  /*Toggle edit mode on long press*/
+                }
+            }
         }
 
         if(i->proc.reset_query) return;     /*The object might be deleted in `focus_cb` or due to any other user event*/

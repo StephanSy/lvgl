@@ -54,11 +54,15 @@ static void basic_init(void)
     def.body.grad_color = LV_COLOR_WHITE;
     def.body.radius = 0;
     def.body.opa = LV_OPA_COVER;
-    def.body.padding.hor = LV_DPI / 10;
-    def.body.padding.ver = LV_DPI / 10;
-    def.body.padding.inner = LV_DPI / 10;
+//    def.body.padding.hor = LV_DPI / 10;
+//    def.body.padding.ver = LV_DPI / 10;
+//    def.body.padding.inner = LV_DPI / 10;
+    def.body.padding.hor = 2;
+    def.body.padding.ver = 2;
+    def.body.padding.inner = 2;
     def.body.border.color = LV_COLOR_BLACK;
-    def.body.border.width = 1;
+//    def.body.border.width = 1;
+    def.body.border.width = 0;
     def.body.border.opa = LV_OPA_COVER;
     def.body.border.part = LV_BORDER_FULL;
 
@@ -89,8 +93,9 @@ static void basic_init(void)
     dark_plain.image.color = LV_COLOR_WHITE;
 
     lv_style_copy(&dark_frame, &dark_plain);
-    dark_frame.body.radius = LV_DPI / 20;
-
+    //dark_frame.body.radius = LV_DPI / 20;
+    dark_frame.body.radius = 0;
+    dark_frame.body.border.width = 1;
     theme.bg = &def;
     theme.panel = &light_frame;
 
@@ -307,7 +312,8 @@ static void mbox_init(void)
 #if USE_LV_MBOX
 
 
-    theme.mbox.bg = &dark_frame;
+//    theme.mbox.bg = &dark_frame;
+    theme.mbox.bg = &light_frame;
     theme.mbox.btn.bg = &lv_style_transp_fit;
     theme.mbox.btn.rel = &light_frame;
     theme.mbox.btn.pr = &dark_frame;

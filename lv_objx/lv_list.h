@@ -54,6 +54,7 @@ typedef struct
     lv_page_ext_t page; /*Ext. of ancestor*/
     /*New data for this type */
     uint16_t anim_time;                          /*Scroll animation time*/
+    uint8_t  wrap_around : 1;                    /*List navigation has wrap around */
     lv_style_t *styles_btn[LV_BTN_STATE_NUM];    /*Styles of the list element buttons*/
     lv_style_t *style_img;                       /*Style of the list element images on buttons*/
     uint32_t size; /*the number of items(buttons) in the list*/
@@ -183,6 +184,14 @@ static inline void lv_list_set_edge_flash(lv_obj_t * list, bool en)
  * @param style pointer to a style
  */
 void lv_list_set_style(lv_obj_t *list, lv_list_style_t type, lv_style_t *style);
+
+/**
+ * Set wrap around navigation flag of a list
+ * @param list pointer to a list object
+ * @param type which style should be set
+ * @param style pointer to a style
+ */
+void lv_list_set_wrap_around(lv_obj_t * list, bool en);
 
 /*=====================
  * Getter functions
